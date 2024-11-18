@@ -6,12 +6,12 @@ GAME_WIDTH = int(GAME_HEIGHT / 2)
 SIDE_BAR_SIZE = int(GAME_HEIGHT / 4)
 SPACE_SIZE = int(GAME_HEIGHT / 20)
 BACKGROUND_COLOR = "#25042F"
-BLOCK_COLOR = "#F2F 911"
 STARTING_SPEED = 600  # Default 600
-REFRESH_SPEED = 5
+REFRESH_SPEED = 1  # Default 5
 STARTING_COORDINATES = [((GAME_WIDTH / SPACE_SIZE) / 2 - 1) * SPACE_SIZE, SPACE_SIZE * 1]
 
 
+# Functions for creating different block types.
 def block_type1(x, y, orientation):  # L-block 1
     if orientation == 0:
         coordinates = [[x, y], [x + SPACE_SIZE, y], [x + SPACE_SIZE, y - SPACE_SIZE], [x - SPACE_SIZE, y]]
@@ -90,6 +90,9 @@ def block_type7(x, y, orientation):
 
 
 class Block:
+    """
+    Class for the blocks in the game. Each block has coordinates, squares and shadow squares.
+    """
     def __init__(self):
 
         x, y = STARTING_COORDINATES
@@ -134,35 +137,18 @@ class Block:
             self.shadow_squares.append(square)
 
     def erase_shadow(self):
-        for i in range(0, 4):
+        for _ in range(0, 4):
             canvas.delete(self.shadow_squares[0])
             del self.shadow_squares[0]
         self.shadow_coordinates = []
 
 
-def speed():
-    multiplier = 0
-    count = turncount
-    while count > 10:
-        count -= 10
-        multiplier += 1
-
-    return int(STARTING_SPEED * 0.95**multiplier)
-
-
 def next_turn():
-
-    global block_falling
-    global block_dictionary
-    global block1
-    global block_type
-    global direction
-    global orientation
-    global bin_matrix
-    global upcoming_blocks
-    global upcoming_positions
-    global turncount
-    global fastforward_enabled
+    global block_falling, block_dictionary, block1, block_type, direction, orientation, bin_matrix, upcoming_blocks, upcoming_positions, turncount, fastforward_enabled, game_speed, speed_multiplier
+    """
+    Moves falling block one step down. If the block has reached the bottom, the block is placed in the game board. Updates the game speed.
+    Checks if any rows are full and deletes them. Creates a new falling block. Checks if the game is over. Creates the three upcoming blocks.
+    """
 
     if block_falling:
         xold, yold = block1.coordinates
@@ -197,7 +183,10 @@ def next_turn():
 
     else:
         turncount += 1
-        print(turncount)
+        # Updating the game speed
+        if turncount % 10 == 0:
+            speed_multiplier += 1
+            game_speed = int(STARTING_SPEED * 0.95**speed_multiplier)
 
         if len(upcoming_blocks) <= 4:
             new_blocks = [1, 2, 3, 4, 5, 6, 7]
@@ -230,25 +219,21 @@ def next_turn():
 
 
 def next_turn_callback():
+    """
+    The main loop of the game. Calls next_turn when the game is not over.
+    """
     if bin_matrix[0] == [0]*10:  # First row is empty
         next_turn()
-        window.after(speed(), next_turn_callback)
+        window.after(game_speed, next_turn_callback)
     else:
         game_over()
 
-
-"""
-def next_turn_callback():
-    if bin_matrix[0] != [0]*10 or bin_matrix[1][3] == 1 or bin_matrix[1][4] == 1 or bin_matrix[1][5] == 1:
-        game_over()
-    else:
-        next_turn()
-        window.after(speed(), next_turn_callback)
-"""
 
 def fastforward():
-    global fastforward_enabled
-    global is_over
+    global fastforward_enabled, is_over
+    """
+    Fastforwards the game by calling next_turn when the down key is pressed.
+    """
 
     if fastforward_enabled and not is_over:
         next_turn()
@@ -256,15 +241,17 @@ def fastforward():
 
 def enable_fastforward():
     global fastforward_enabled
+    """
+    Enables the fastforward function after a block has been placed in the game board.
+    """
     fastforward_enabled = True
 
 
 def skip_turn():
-    global block_falling
-    global fastforward_enabled
-    global block_dictionary
-    global block_type
-    global orientation
+    global block_falling, fastforward_enabled, block_dictionary, block_type, orientation
+    """
+    Immediately places the block in the game board.
+    """
 
     if block_falling:
         block_falling = False
@@ -290,11 +277,10 @@ def skip_turn():
 
 
 def update_status():
-    global block_falling
-    global block_type
-    global direction
-    global block1
-    global orientation
+    global block_falling, block_type, direction, orientation, block1
+    """
+    Updates the status of the game bases on the speed defined by the variable REFRESH_SPEED.
+    """
 
     if block_falling:
         xold, yold = block1.coordinates
@@ -319,11 +305,10 @@ def update_status():
 
 
 def check_collisions():
-
-    global block_type
-    global block_dictionary
-    global block_falling
-    global bin_matrix
+    global block_type, block_dictionary, block_falling, bin_matrix
+    """
+    Cheks if the block has collided with the bottom or another block.
+    """
 
     x, y = block1.coordinates
     coordinates = block_dictionary[block_type][0](x, y, orientation)
@@ -336,10 +321,10 @@ def check_collisions():
 
 
 def change_orientation():
-    global orientation
-    global block1
-    global block_type
-    global bin_matrix
+    global orientation, block1, block_type, bin_matrix
+    """
+    Checks if the block can be rotated. If it can, the block is rotated.
+    """
 
     new_orientation = 0
 
@@ -384,10 +369,10 @@ def change_orientation():
 
 
 def move_to(new_direction):
-    global direction
-    global block1
-    global block_type
-    global bin_matrix
+    global direction, block1, block_type, bin_matrix, bin_matrix
+    """
+    Checks if the block can be moved to the new direction. If it can, the block is moved.
+    """
 
     x, y = block1.coordinates
     coordinates = block_dictionary[block_type][0](x, y, orientation)
@@ -413,9 +398,10 @@ def move_to(new_direction):
 
 
 def check_matrix():
-    global bin_matrix
-    global square_matrix
-    global score
+    global bin_matrix, square_matrix, score
+    """
+    Checks if any rows are full and deletes them. Updates the score.
+    """
 
     rows_to_delete = []
 
@@ -457,37 +443,114 @@ def check_matrix():
     score_label.config(text="Score: {}".format(score))
 
 
-def run_game():
-    global score_label
-    global next_label
-    global is_over
-    # print("Game started")
-    is_over = False
+def initialize_game():
+    global score_label, next_label, is_over, bin_matrix, square_matrix, score, direction, score_file, turncount, fastforward_enabled, block_falling, block_dictionary, block_type, upcoming_blocks, upcoming_positions, orientation, block1, block2, block3, block4, speed_multiplier, game_speed
+    """
+    Initializes game variables and creates the game board for a new game.
+    """
 
-    start_button.place(x=-100, y=0)
+    orientation = 0  # Block orientation gets values from 0 to 3. 0 = starting orientation.
+    block_falling = False
+
+    # Dictionary for block types and their colors.
+    block_dictionary = {1: [block_type1, "#F2F911"], 2: [block_type2, "#F93F11"], 3: [block_type3, "#89F911"],
+                        4: [block_type4, "#BD11F9"], 5: [block_type5, "#1DE5F1"], 6: [block_type6, "#F1A11D"], 7: [block_type7, "#F246F2"]}
+    block_type = None
+
+    upcoming_blocks = [1, 2, 3, 4, 5, 6, 7]
+    random.shuffle(upcoming_blocks)
+    upcoming_positions = [[SPACE_SIZE*11.5, SPACE_SIZE*7], [SPACE_SIZE*11.5, SPACE_SIZE*10], [SPACE_SIZE*11.5, SPACE_SIZE*13]]
+
+    is_over = False
+    score = 0
+    direction = 0  # 0 = do nothing, 1 = Left, 2 = Right.
+
+    score_file = "tetris_score.txt"
+    turncount = 0
+    fastforward_enabled = True
+    game_speed = STARTING_SPEED
+    speed_multiplier = 0
+
+
+    #  Stores placements of each square.
+    rows, cols = 20, 10
+    bin_matrix = [([0] * cols) for _ in range(rows)]
+
+    #  Stores drawn pictures of the squares.
+    square_matrix = [([0] * cols) for _ in range(rows)]
+
+    canvas.delete(ALL)
     # Creating the game-board.
     for i in range(len(bin_matrix)):
         for j in range(len(bin_matrix[0])):
             x = j * SPACE_SIZE
             y = i * SPACE_SIZE
             canvas.create_rectangle(x, y, x + SPACE_SIZE, y + SPACE_SIZE, fill=BACKGROUND_COLOR)
-            # print("Loop working")
 
-    canvas.create_rectangle(GAME_WIDTH, 0, GAME_WIDTH + SPACE_SIZE / 4, GAME_HEIGHT, fill="white")
+    canvas.create_rectangle(GAME_WIDTH, 0, GAME_WIDTH + SPACE_SIZE/4, GAME_HEIGHT, fill="white")
+    score_label = Label(window, text="Score: {}".format(score), font=('Comic Sans MS', 15), bg=BACKGROUND_COLOR, fg="white")
 
-    score_label.place(x=GAME_WIDTH + SPACE_SIZE / 3, y=2)
+    score_label.place(x=GAME_WIDTH + SPACE_SIZE/3, y=2)
+    next_label = Label(window, text="Next", font=('Comic Sans MS', 15), bg=BACKGROUND_COLOR, fg="white")
 
-    next_label.place(x=GAME_WIDTH + SPACE_SIZE / 3, y=SPACE_SIZE * 4)
+    next_label.place(x=GAME_WIDTH + SPACE_SIZE/3, y=SPACE_SIZE*4)
 
-    next_turn_callback()
-    update_status()
+    # Game block and three visible blocks in the side bar. 
+    block1 = Block()
+    block2 = Block()
+    block3 = Block()
+    block4 = Block()
+
+
+def create_starting_screen():
+    global is_over, block_falling
+    """
+    Creates the starting screen.
+    """
+
+    is_over = True
+    block_falling = False
+
+    # Tetrsis text with each letter in a different color.
+    colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet']
+    text = "TETRIS"
+    for i, letter in enumerate(text):
+        canvas.create_text(
+            canvas.winfo_width()/2 - 75 + (i * 30),  # Position each letter next to each other
+            canvas.winfo_height()*2/14,
+            font=('consolas', 40),
+            text=letter,
+            fill=colors[i]
+        )
+    canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()*3/14,
+                       font=('Comic Sans MS', 14), text="By Markus Junttila", fill="white")    
+    # Instructions
+    canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()*9/14,
+                          font=('Comic Sans MS', 16), text="Use arrow keys to move and rotate blocks", fill="white")
+    canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()*10/14,
+                            font=('Comic Sans MS', 16), text="Press space to skip a turn", fill="white")
+    canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()*12/14,
+                       font=('Comic Sans MS', 20), text="Press Enter to start", fill="white")
+
+
+def start_game():
+    global is_over
+    """
+    Starts new game.
+    """
+
+    if is_over:
+        initialize_game()  # Initialize game variables and create game board.
+        next_turn_callback()  # Start the game loop.
 
 
 def game_over():
-    global is_over
-    global start_button
-    is_over = True
+    global is_over, score_label, next_label, is_over
+    """
+    Ends the game and shows the game over screen.
+    """
 
+    is_over = True
     # Save score to a file
     with open(score_file, "a") as file:
         file.write(str(score) + "\n")
@@ -507,73 +570,18 @@ def game_over():
                        font=('Comic Sans MS', 20), text="Score: "+str(score), fill="white")
     canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()*9/14,
                     font=('Comic Sans MS', 20), text="High score: "+str(high_score), fill="white")
+    canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()*12/14,
+                    font=('Comic Sans MS', 16), text="Press Enter to start a new game", fill="white")
     score_label.destroy()
     next_label.destroy()
-    """
-    score_label.place(x=-100, y=0)
-    next_label.place(x=-100, y=0)
-    start_button.place(x=150, y=550)
-    """
 
 
-#  Stores placements of each square.
-rows, cols = 20, 10
-bin_matrix = [([0] * cols) for _ in range(rows)]
-
-#  Stores drawn pictures of the squares.
-square_matrix = [([0] * cols) for _ in range(rows)]
-
-# Orientation gets values from 0 to 3. 0 = starting orientation.
-orientation = 0
-
-block_falling = False
-
-block_dictionary = {1: [block_type1, "#F2F911"], 2: [block_type2, "#F93F11"], 3: [block_type3, "#89F911"],
-                    4: [block_type4, "#BD11F9"], 5: [block_type5, "#1DE5F1"], 6: [block_type6, "#F1A11D"], 7: [block_type7, "#F246F2"]}
-
-block_type = None
-
-upcoming_blocks = [1, 2, 3, 4, 5, 6, 7]
-random.shuffle(upcoming_blocks)
-upcoming_positions = [[SPACE_SIZE*11.5, SPACE_SIZE*7], [SPACE_SIZE*11.5, SPACE_SIZE*10], [SPACE_SIZE*11.5, SPACE_SIZE*13]]
-
-# 0 = do nothing, 1 = Left, 2 = Right.
-direction = 0
-
-score_file = "tetris_score.txt"
-score = 0
-turncount = 0
-fastforward_enabled = True
-is_over = False
-
-
+# Create Tkinter window and canvas.
 window = Tk()
 window.title("Tetris")
 window.resizable(False, False)
-
 canvas = Canvas(window, bg=BACKGROUND_COLOR, height=GAME_HEIGHT, width=GAME_WIDTH + SIDE_BAR_SIZE)
 canvas.pack()
-
-# Creating the game-board.
-for i in range(len(bin_matrix)):
-    for j in range(len(bin_matrix[0])):
-        x = j * SPACE_SIZE
-        y = i * SPACE_SIZE
-        canvas.create_rectangle(x, y, x + SPACE_SIZE, y + SPACE_SIZE, fill=BACKGROUND_COLOR)
-
-canvas.create_rectangle(GAME_WIDTH, 0, GAME_WIDTH + SPACE_SIZE/4, GAME_HEIGHT, fill="white")
-score_label = Label(window, text="Score: {}".format(score), font=('Comic Sans MS', 15), bg=BACKGROUND_COLOR, fg="white")
-
-score_label.place(x=GAME_WIDTH + SPACE_SIZE/3, y=2)
-next_label = Label(window, text="Next", font=('Comic Sans MS', 15), bg=BACKGROUND_COLOR, fg="white")
-
-next_label.place(x=GAME_WIDTH + SPACE_SIZE/3, y=SPACE_SIZE*4)
-
-"""
-start_button = Button(window, text='Start')
-start_button.config(command=run_game)
-start_button.place(x=10, y=10)
-"""
 window.update()
 
 window_width = window.winfo_width()
@@ -586,19 +594,15 @@ y = int((screen_height / 2) - (window_height / 2) - window_height / 15)
 
 window.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
+# Bind keys to functions.
 window.bind('<Up>', lambda _: change_orientation())
 window.bind('<Left>', lambda _: move_to(1))
 window.bind('<Right>', lambda _: move_to(2))
 window.bind('<Down>', lambda _: fastforward())
 window.bind('<space>', lambda _: skip_turn())
+window.bind('<Return>', lambda _: start_game())
 
-# Game block and three visible blocks in the side bar. 
-block1 = Block()
-block2 = Block()
-block3 = Block()
-block4 = Block()
-
-next_turn_callback()
-update_status()
+create_starting_screen()  # Create the starting screen.
+update_status()  # Update the status of the game.
 
 window.mainloop()
