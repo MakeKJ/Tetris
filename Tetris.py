@@ -222,8 +222,10 @@ def next_turn_callback():
     """
     The main loop of the game. Calls next_turn when the game is not over.
     """
-    if bin_matrix[0] == [0]*10:  # First row is empty
+
+    if bin_matrix[0] == [0]*10:  # First row is empty # if turncount == 0 or (not prev_check_collisions and not new_prev_check_collisions):  
         next_turn()
+        # window.after(game_speed, next_turn_callback)
         window.after(game_speed, next_turn_callback)
     else:
         game_over()
@@ -378,15 +380,21 @@ def move_to(new_direction):
     coordinates = block_dictionary[block_type][0](x, y, orientation)
     next_to = False
 
+    # Early checks at the edges of the board to avoid index errors.
     for square in coordinates:
         row = int(square[1] / SPACE_SIZE)
         col = int(square[0] / SPACE_SIZE)
+        if (new_direction == 1 and col == 0) or (new_direction == 2 and col == 9) or (col < 0 or col > 9):
+            next_to = True
 
-        if square[0] == 0 and new_direction == 1:
-            next_to = True
-        elif int(square[0]/SPACE_SIZE) == 9 and new_direction == 2:
-            next_to = True
-        elif new_direction == 1 and bin_matrix[row][col - 1] == 1:
+    for square in coordinates:
+        # The block cannot move in the desired direction.
+        if next_to:
+            break
+
+        row = int(square[1] / SPACE_SIZE)
+        col = int(square[0] / SPACE_SIZE)
+        if new_direction == 1 and bin_matrix[row][col - 1] == 1:
             next_to = True
         elif new_direction == 2 and bin_matrix[row][col + 1] == 1:
             next_to = True
@@ -472,11 +480,11 @@ def initialize_game():
     speed_multiplier = 0
 
 
-    #  Stores placements of each square.
+    # Stores placements of each square.
     rows, cols = 20, 10
     bin_matrix = [([0] * cols) for _ in range(rows)]
 
-    #  Stores drawn pictures of the squares.
+    # Stores drawn pictures of the squares.
     square_matrix = [([0] * cols) for _ in range(rows)]
 
     canvas.delete(ALL)
