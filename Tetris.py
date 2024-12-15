@@ -149,7 +149,6 @@ def next_turn():
     Moves falling block one step down. If the block has reached the bottom, the block is placed in the game board. Updates the game speed.
     Checks if any rows are full and deletes them. Creates a new falling block. Checks if the game is over. Creates the three upcoming blocks.
     """
-
     if block_falling:
         xold, yold = block1.coordinates
         oldcoordinates = block_dictionary[block_type][0](xold, yold, orientation)
@@ -222,10 +221,8 @@ def next_turn_callback():
     """
     The main loop of the game. Calls next_turn when the game is not over.
     """
-
-    if bin_matrix[0] == [0]*10:  # First row is empty # if turncount == 0 or (not prev_check_collisions and not new_prev_check_collisions):  
+    if bin_matrix[0] == [0]*10:  
         next_turn()
-        # window.after(game_speed, next_turn_callback)
         window.after(game_speed, next_turn_callback)
     else:
         game_over()
@@ -236,7 +233,6 @@ def fastforward():
     """
     Fastforwards the game by calling next_turn when the down key is pressed.
     """
-
     if fastforward_enabled and not is_over:
         next_turn()
 
@@ -254,7 +250,6 @@ def skip_turn():
     """
     Immediately places the block in the game board.
     """
-
     if block_falling:
         block_falling = False
         fastforward_enabled = False
@@ -283,7 +278,6 @@ def update_status():
     """
     Updates the status of the game bases on the speed defined by the variable REFRESH_SPEED.
     """
-
     if block_falling:
         xold, yold = block1.coordinates
         newcoordinates = []
@@ -311,7 +305,6 @@ def check_collisions():
     """
     Cheks if the block has collided with the bottom or another block.
     """
-
     x, y = block1.coordinates
     coordinates = block_dictionary[block_type][0](x, y, orientation)
 
@@ -327,7 +320,6 @@ def change_orientation():
     """
     Checks if the block can be rotated. If it can, the block is rotated.
     """
-
     new_orientation = 0
 
     if orientation != 3:
@@ -375,7 +367,6 @@ def move_to(new_direction):
     """
     Checks if the block can be moved to the new direction. If it can, the block is moved.
     """
-
     x, y = block1.coordinates
     coordinates = block_dictionary[block_type][0](x, y, orientation)
     next_to = False
@@ -410,7 +401,6 @@ def check_matrix():
     """
     Checks if any rows are full and deletes them. Updates the score.
     """
-
     rows_to_delete = []
 
     # Find rows to delete
@@ -456,7 +446,6 @@ def initialize_game():
     """
     Initializes game variables and creates the game board for a new game.
     """
-
     orientation = 0  # Block orientation gets values from 0 to 3. 0 = starting orientation.
     block_falling = False
 
@@ -515,7 +504,6 @@ def create_starting_screen():
     """
     Creates the starting screen.
     """
-
     is_over = True
     block_falling = False
 
@@ -546,7 +534,6 @@ def start_game():
     """
     Starts new game.
     """
-
     if is_over:
         initialize_game()  # Initialize game variables and create game board.
         next_turn_callback()  # Start the game loop.
@@ -557,7 +544,6 @@ def game_over():
     """
     Ends the game and shows the game over screen.
     """
-
     is_over = True
     # Save score to a file
     with open(score_file, "a") as file:
@@ -603,11 +589,11 @@ y = int((screen_height / 2) - (window_height / 2) - window_height / 15)
 window.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
 # Bind keys to functions.
-window.bind('<Up>', lambda _: change_orientation())
-window.bind('<Left>', lambda _: move_to(1))
-window.bind('<Right>', lambda _: move_to(2))
-window.bind('<Down>', lambda _: fastforward())
-window.bind('<space>', lambda _: skip_turn())
+window.bind('<Up>', lambda event: change_orientation() if not is_over else None)
+window.bind('<Left>', lambda event: move_to(1) if not is_over else None)
+window.bind('<Right>', lambda event: move_to(2) if not is_over else None)
+window.bind('<Down>', lambda event: fastforward() if not is_over else None)
+window.bind('<space>', lambda event: skip_turn() if not is_over else None)
 window.bind('<Return>', lambda _: start_game())
 
 create_starting_screen()  # Create the starting screen.
